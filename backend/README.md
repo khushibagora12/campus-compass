@@ -12,11 +12,11 @@ An AI-powered, multilingual chatbot for navigating college information.
 6.  [Final Integration Plan](#final-integration-plan-)
 
 ---
-### The Problem 😥
+### #The Problem 😥
 College administrative offices are overwhelmed with hundreds of repetitive student queries on topics like fee deadlines, forms, and schedules. This creates long queues and strains staff. Furthermore, many students are more comfortable in regional languages, leading to communication gaps.
 
 ---
-### Our Solution ✨
+### #Our Solution ✨
 **Campus Compass** is a sophisticated, multilingual AI assistant designed to solve this problem. It provides instant, 24/7, and accurate answers to student questions in their native language. Our solution ingests all official college documents (PDFs, DOCs, etc.) to ensure its responses are always correct and context-aware.
 
 ---

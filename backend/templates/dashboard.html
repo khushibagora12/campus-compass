@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - {{ college_id }}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #1a1a2e;
+            --card-color: #16213e;
+            --primary-color: #0f3460;
+            --accent-color: #e94560;
+            --text-color: #e0e0e0;
+            --font-family: 'Poppins', sans-serif;
+        }
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+        .container {
+            width: 100%;
+            max-width: 700px;
+        }
+        h1, h2 {
+            text-align: center;
+            color: white;
+            margin-bottom: 0.5rem;
+        }
+        h2 {
+            font-weight: 500;
+            color: #a0a0a0;
+        }
+        .card {
+            background-color: var(--card-color);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-top: 2rem;
+            border: 1px solid var(--primary-color);
+            box-shadow: 0 8px 16px rgba(0,0,0,0.2);
+        }
+        h3 {
+            margin-top: 0;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 0.5rem;
+        }
+        label, input, button {
+            display: block;
+            width: 100%;
+            box-sizing: border-box;
+            margin-bottom: 1rem;
+        }
+        input[type="file"] {
+            border: 1px solid #555;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        button {
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s, background-color 0.2s;
+        }
+        button:hover {
+            transform: translateY(-2px);
+        }
+        #upload-btn { background-color: #1f4068; }
+        #upload-btn:hover { background-color: #2a588b; }
+        #ingest-btn { background-color: var(--accent-color); }
+        #ingest-btn:hover { background-color: #ff5c77; }
+        #message {
+            text-align: center;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            border-radius: 5px;
+            font-weight: 500;
+            display: none; /* Hidden by default */
+        }
+        #message.success { display: block; background-color: #28a745; color: white; }
+        #message.error { display: block; background-color: #721c24; color: #f8d7da; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Admin Dashboard</h1>
+        <h2>Managing Documents for: <strong>{{ college_id }}</strong></h2>
+        
+        <div class="card">
+            <h3>Upload New Document(s)</h3>
+            <form id="uploadForm">
+                <input type="hidden" name="college_id" value="{{ college_id }}">
+                <input type="file" name="files" required multiple>
+                <button type="submit" id="upload-btn">Upload Files</button>
+            </form>
+        </div>
+
+        <div class="card">
+            <h3>Process Uploaded Documents</h3>
+            <p>After uploading, trigger the ingestion to make the chatbot learn from the new files.</p>
+            <form id="ingestForm">
+                <input type="hidden" name="college_id" value="{{ college_id }}">
+                <button type="submit" id="ingest-btn">Start Ingestion for {{ college_id }}</button>
+            </form>
+        </div>
+        <div id="message"></div>
+    </div>
+    <script>
+        const messageDiv = document.getElementById('message');
+        const handleFormSubmit = async (formId, event) => {
+            event.preventDefault();
+            const form = document.getElementById(formId);
+            const formData = new FormData(form);
+            const action = (formId === 'uploadForm') ? '/admin/upload' : '/admin/ingest';
+            
+            messageDiv.className = '';
+            messageDiv.textContent = 'Processing...';
+            messageDiv.style.display = 'block';
+
+            try {
+                const response = await fetch(action, { method: 'POST', body: formData });
+                const result = await response.json();
+                if (response.ok) {
+                    messageDiv.textContent = result.message;
+                    messageDiv.className = 'success';
+                } else {
+                    messageDiv.textContent = result.error || 'An unknown error occurred.';
+                    messageDiv.className = 'error';
+                }
+            } catch (error) {
+                messageDiv.textContent = 'Network error. Please try again.';
+                messageDiv.className = 'error';
+            }
+        };
+        document.getElementById('uploadForm').addEventListener('submit', (e) => handleFormSubmit('uploadForm', e));
+        document.getElementById('ingestForm').addEventListener('submit', (e) => handleFormSubmit('ingestForm', e));
+    </script>
+</body>
+</html>
