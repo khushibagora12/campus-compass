@@ -1,0 +1,15 @@
+python-dotenv
+langchain
+langchain-community
+langchain-pinecone
+pinecone
+langchain-google-genai
+sentence-transformers
+python-docx
+docx2txt
+tqdm
+unstructured[pdf]
+openpyxl
+pytesseract
+fastapi
+uvicorn[standard]
