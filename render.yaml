@@ -22,9 +22,12 @@ services:
         sync: false
       - key: SUPABASE_KEY
         sync: false
+      - key: SUPABASE_SERVICE_KEY
+        sync: false
       - key: REDIS_URL
         sync: false   # paste your existing Redis connection URL in the dashboard
-
+      - key: REDIS_PASSWORD
+        sync: false
       # --- SAFE, NON-SECRET DEFAULTS (ok to commit) ---
       - key: PINECONE_INDEX_NAME
         value: campus-assistant
