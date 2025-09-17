@@ -5,13 +5,11 @@ services:
     plan: free
     region: oregon
 
-    rootDir: backend
-
     buildCommand: |
       pip install --upgrade pip setuptools wheel
-      pip install -r requirements.txt -c constraints.txt
+      pip install -r backend/requirements.txt -c constraints.txt
 
-    startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
 
     autoDeploy: true
     healthCheckPath: /
