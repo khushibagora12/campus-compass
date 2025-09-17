@@ -1,0 +1,28 @@
+# LangChain 0.2.x line (compatible with your imports)
+langchain==0.2.15
+langchain-community==0.2.15
+# let pip pick a matching langchain-core 0.2.x
+
+# Pinecone integration and SDKs
+langchain-pinecone==0.1.2        # works with langchain 0.2.x
+pinecone[grpc]==5.1.0            # your code uses `from pinecone import Pinecone`
+
+# Web framework / tooling
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+python-dotenv==1.0.1
+jinja2==3.1.4
+python-multipart==0.0.9
+
+# Model integrations
+langchain-google-genai==1.0.4
+langchain-huggingface==0.0.3
+
+# Infra / clients
+redis==5.0.4
+supabase==2.4.2
+httpx==0.27.0
+passlib[bcrypt]==1.7.4
+
+# Ingestion
+unstructured[all-docs]>=0.14.5
