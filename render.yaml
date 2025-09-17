@@ -1,0 +1,32 @@
+services:
+  - type: web
+    name: campus-compass-api
+    runtime: python
+    plan: free
+    region: oregon
+    env: python
+    buildCommand: |
+      pip install --upgrade pip setuptools wheel
+      pip install -r requirements.txt -c constraints.txt
+    startCommand: uvicorn backend.main:app --host 0.0.0.0 --port 10000
+    autoDeploy: true
+    # If your app listens on a different port, update the --port above and the health check below.
+    healthCheckPath: /
+    envVars:
+      # --- REQUIRED SECRETS (set values in the Render dashboard; do NOT commit them) ---
+      - key: PINECONE_API_KEY
+        sync: false
+      - key: GOOGLE_API_KEY
+        sync: false
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_KEY
+        sync: false
+      - key: REDIS_URL
+        sync: false   # paste your existing Redis connection URL in the dashboard
+
+      # --- SAFE, NON-SECRET DEFAULTS (ok to commit) ---
+      - key: PINECONE_INDEX_NAME
+        value: campus-assistant
+      - key: STORAGE_BUCKET_NAME
+        value: college-documents
