@@ -9,7 +9,7 @@ services:
 
     buildCommand: |
       pip install --upgrade pip setuptools wheel
-      pip install -r requirements.txt -c ../constraints.txt
+      pip install -r requirements.txt -c constraints.txt
 
     startCommand: uvicorn main:app --host 0.0.0.0 --port $PORT
 
@@ -17,7 +17,6 @@ services:
     healthCheckPath: /
 
     envVars:
-      # --- REQUIRED SECRETS (set in Render dashboard, not in repo) ---
       - key: PINECONE_API_KEY
         sync: false
       - key: GOOGLE_API_KEY
@@ -29,12 +28,9 @@ services:
       - key: SUPABASE_SERVICE_KEY
         sync: false
       - key: REDIS_URL
-        sync: false   # paste connection string from your existing Redis
-      # Optional if your code uses it separately
+        sync: false
       - key: REDIS_PASSWORD
         sync: false
-
-      # --- SAFE DEFAULTS ---
       - key: PINECONE_INDEX_NAME
         value: campus-assistant
       - key: STORAGE_BUCKET_NAME
