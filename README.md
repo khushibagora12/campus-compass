@@ -1,100 +1,199 @@
 # 🧭 Campus Compass
-
 An AI-powered, multilingual chatbot for navigating college information.
 
 ---
-### ## Table of Contents
-1.  [The Problem](#the-problem-)
-2.  [Our Solution](#our-solution-)
-3.  [Tech Stack](#tech-stack-)
-4.  [Project Status](#project-status-%EF%B8%8F)
-5.  [Team Roles & Workflow](#team-roles--workflow-)
-6.  [Final Integration Plan](#final-integration-plan-)
+
+## Table of Contents
+1. [The Problem](#the-problem-)
+2. [Our Solution](#our-solution-)
+3. [Tech Stack](#tech-stack-)
+4. [Project Status](#project-status-)
+5. [Team Roles & Workflow](#team-roles--workflow-)
+6. [Final Integration Plan](#final-integration-plan-)
+7. [Development Setup](#development-setup-)
+8. [Versioning & Constraints](#versioning--constraints-)
+9. [Changelog](#changelog-)
 
 ---
-### #The Problem 😥
+
+## The Problem 😥
 College administrative offices are overwhelmed with hundreds of repetitive student queries on topics like fee deadlines, forms, and schedules. This creates long queues and strains staff. Furthermore, many students are more comfortable in regional languages, leading to communication gaps.
 
 ---
-### #Our Solution ✨
+
+## Our Solution ✨
 **Campus Compass** is a sophisticated, multilingual AI assistant designed to solve this problem. It provides instant, 24/7, and accurate answers to student questions in their native language. Our solution ingests all official college documents (PDFs, DOCs, etc.) to ensure its responses are always correct and context-aware.
 
 ---
-### Tech Stack 🛠️
-* **Backend:** Python, FastAPI, LangChain
-* **Frontend:** Next.js (React)
-* **AI Model:** `paraphrase-multilingual-mpnet-base-v2` (for embeddings) & Google's Gemini API (for generation)
-* **Database:** Pinecone (Vector DB)
-* **Deployment:** Docker, Render (Backend), Vercel (Frontend)
+
+## Tech Stack 🛠️
+- **Backend:** Python, FastAPI, LangChain  
+- **Frontend:** Next.js (React)  
+- **AI Model:** `paraphrase-multilingual-mpnet-base-v2` (embeddings) & Google Gemini API (generation)  
+- **Database:** Pinecone (Vector DB)  
+- **Cache & Memory:** Redis (Render)  
+- **Deployment:** Docker, Render (Backend), Vercel (Frontend)  
 
 ---
-### Project Status 🗓️
 
-#### **✅ Completed**
-* **Core AI Engine (by Tanay):**
-    * A sophisticated data ingestion pipeline (`ingest.py`) that can read multiple file formats (PDFs, DOCX, CSVs), handle scanned documents (OCR), and understands multiple Indian languages.
-    * The system is multi-tenant, ready to support multiple colleges using secure `namespaces`.
-* **Core Backend API (by Tanay):**
-    * A functional local server (`main.py`) powered by our RAG engine.
-    * The API supports conversational memory (follow-up questions) and has an intelligent human fallback mechanism.
+## Project Status 🗓️
 
-#### **⏳ Remaining**
-The core AI is built. The remaining work involves making it production-ready, building the user interfaces, and preparing our final presentation.
+### ✅ Completed
+- **Core AI Engine (by Tanay):**
+  - Multi-format ingestion pipeline (`ingest.py`) with OCR + multilingual support.
+  - Multi-tenant support via namespaces.
+- **Core Backend API (by Tanay):**
+  - RAG engine + conversational memory with Redis.
+  - Human fallback mechanism for missing answers.
 
----
-### Team Roles & Workflow 📋
-
-This is the official plan. Please stick to these tasks to ensure a smooth workflow.
-
-### **🧠 AI/ML - Tanay**
-Your role is to support the other teams and refine the core engine.
-* **Task 1: Support Backend:** Help Shivam & Shatakshi understand the `ingest.py` and `main.py` scripts and advise on the best way to trigger the ingestion process from the Admin Dashboard.
-* **Task 2: Support Frontend:** Clearly explain the API's JSON payload requirements (`query`, `college_id`, `session_id`) to Khushi & Sahil so they can connect the UI correctly.
-* **Task 3 (Stretch Goal):** If time permits, experiment with prompt engineering to further improve the quality of the AI's answers.
+### ⏳ Remaining
+- Containerization + deployment to Render.  
+- Admin Dashboard (file upload + ingestion trigger).  
+- Student-facing chat widget (Next.js → Vercel).  
+- Final slide deck + polished demo.  
 
 ---
-### **⚙️ Backend Team - Shivam & Shatakshi**
-Your goal is to turn the local Python scripts into a robust, deployed, and manageable online service.
 
-* **Flow:**
-    1.  **Finalize the API:** Clean up `main.py`, add comments, and implement robust error handling.
-    2.  **Containerize with Docker:** Create a `Dockerfile` for the entire backend application.
-    3.  **Deploy v1:** Deploy the containerized API to **Render**. **Your first priority is to get a live API URL to the Frontend team.**
-    4.  **Build Admin Dashboard:** While the frontend team works, build the secure web interface for college admins with:
-        * Admin login.
-        * A feature to add new colleges (creating new `namespaces`).
-        * The drag-and-drop file uploader.
-        * A button/function to trigger the `ingest.py` script for newly uploaded files.
-    5.  **Deploy v2:** Update the deployment on Render with the finished Admin Dashboard.
-* **Deliverable:** A stable, live API URL and a functional Admin Dashboard.
+## Team Roles & Workflow 📋
 
----
-### **🎨 Frontend Team - Khushi & Sahil**
-Your goal is to build the beautiful and intuitive chat interface that students will use.
+### 🧠 AI/ML - Tanay
+Support backend & frontend teams, refine core engine.  
+- Help backend understand ingestion & RAG pipeline.  
+- Help frontend with API payloads (`query`, `college_id`, `session_id`).  
+- Optional: experiment with prompt engineering for better answers.  
 
-* **Flow:**
-    1.  **Design the UI:** Quickly design a clean, simple, and mobile-friendly chat widget.
-    2.  **Build the Component:** Develop the chat widget using **Next.js**. Focus on managing the conversation history state.
-    3.  **Connect to the Live API:** Once the backend team provides the live URL, integrate your widget to make `POST` requests to their `/api/ask` endpoint.
-        * Ensure you are sending `query`, `college_id`, and `session_id` in your requests.
-        * Handle and display the JSON response from the backend.
-        * Implement a special UI for the `fallback: true` message.
-    .   **Deploy:** Deploy the finished Next.js application to **Vercel**.
-* **Deliverable:** A live URL for the user-facing chat widget.
+### ⚙️ Backend Team - Shivam & Shatakshi
+Turn scripts into a deployed, robust service.  
+- Finalize `main.py`, containerize with Docker.  
+- Deploy first version to Render (API URL).  
+- Build Admin Dashboard (login, file upload, ingestion trigger).  
+- Deploy updated backend with dashboard.  
 
----
-### **📝 Presentation & Documentation - Parth**
-Your goal is to craft a compelling story and presentation that will win the hackathon.
+### 🎨 Frontend Team - Khushi & Sahil
+Build the student-facing chat widget.  
+- Design a clean, mobile-friendly UI.  
+- Develop in Next.js with conversation history.  
+- Connect to backend API (`/api/ask`).  
+- Handle `fallback: true` messages gracefully.  
+- Deploy to Vercel.  
 
-* **Flow:**
-    1.  **Content & Script:** Immediately start writing the presentation script. Clearly articulate the **Problem**, our innovative **Solution (RAG)**, the **Tech Stack**, and the **Business Value**.
-    2.  **Slide Deck Design:** Create a visually stunning presentation in Canva, Figma, or Google Slides. Get mockups and logos from Tanay or generate them with AI.
-    3.  **Demo Plan:** Work with the Frontend and Backend teams to script a smooth, end-to-end live demo. Plan for potential failures and have backup screenshots/videos.
-    4.  **Update this README:** Keep this `README.md` file updated. Add a "How to Run Locally" section with instructions for setting up the project.
-* **Deliverable:** A polished slide deck and a well-rehearsed demo plan.
+### 📝 Presentation & Documentation - Parth
+Craft the narrative and presentation.  
+- Write the pitch script (Problem → Solution → Tech → Business).  
+- Build slides with visuals/mockups.  
+- Prepare live demo with backups.  
+- Keep this README updated.  
 
 ---
-### Final Integration Plan 🤝
-1.  The **Backend Team** deploys the core API and gives the URL to the **Frontend Team**.
-2.  The **Frontend Team** integrates the API and deploys the chat widget.
-3.  The **Final Step:** We will take the deployed frontend widget's `<script>` tag and embed it into a simple sample college webpage to demonstrate a complete, end-to-end working product for the final demo.
+
+## Final Integration Plan 🤝
+1. Backend Team deploys API → shares URL with Frontend Team.  
+2. Frontend Team integrates API and deploys chat widget.  
+3. For demo: embed the deployed widget’s `<script>` tag into a sample college webpage.  
+
+---
+
+## Development Setup ⚙️
+
+### 1. Clone the repo & create venv
+```bash
+git clone <repo-url>
+cd Campus-Compass
+python -m venv .venv
+.venv\Scripts\activate
+````
+
+### 2. Install dependencies
+
+We use both a **spec file** (`requirements.txt`) and a **constraints file** (`constraints.txt`) for reproducibility.
+
+```bash
+pip install -r requirements.txt -c constraints.txt
+```
+
+If you just want to run locally (not strict):
+
+```bash
+pip install -r requirements.txt
+```
+
+### 3. Run backend locally
+
+```bash
+uvicorn backend.main:app --reload
+```
+
+Docs available at: [http://127.0.0.1:8000/docs](http://127.0.0.1:8000/docs)
+
+### 4. Environment variables
+
+Create a `.env` with:
+
+```
+PINECONE_API_KEY=xxxx
+GOOGLE_API_KEY=xxxx
+PINECONE_INDEX_NAME=campus-assistant
+REDIS_URL=rediss://<your-tls-url-from-render>
+STORAGE_BUCKET_NAME=college-documents
+```
+
+---
+
+## Versioning & Constraints 📌
+
+Pinned critical packages for stability:
+
+```txt
+langchain==0.2.15
+langchain-community==0.2.15
+langchain-pinecone==0.1.2
+pinecone[grpc]==5.1.0
+```
+
+* We **do not pin** `langchain-core`; pip resolves a compatible 0.2.x (currently `0.2.43`).
+* A `constraints.txt` file is used to freeze exact versions from a working environment.
+
+### Example `constraints.txt`
+
+```txt
+langchain==0.2.15
+langchain-community==0.2.15
+langchain-core==0.2.43
+langchain-pinecone==0.1.2
+pinecone==5.1.0
+fastapi==0.110.0
+uvicorn==0.29.0
+python-dotenv==1.0.1
+jinja2==3.1.4
+python-multipart==0.0.9
+langchain-google-genai==1.0.4
+langchain-huggingface==0.0.3
+redis==5.0.4
+supabase==2.4.2
+httpx==0.27.0
+passlib==1.7.4
+unstructured==0.18.15
+# …plus all transitive deps frozen by pip freeze
+```
+
+To regenerate:
+
+```bash
+pip freeze > constraints.txt
+```
+
+---
+
+## Changelog 📝
+
+### 2025-09-17
+
+* Fixed dependency resolution conflicts in LangChain stack:
+
+  * Aligned on `langchain==0.2.15`, `langchain-community==0.2.15`, `langchain-pinecone==0.1.2`.
+  * Adopted `pinecone[grpc]==5.1.0` (v5 SDK) to support `from pinecone import Pinecone`.
+  * Removed `langchain-redis` (conflicted with core 0.2.x, not needed since we use `RedisChatMessageHistory` from `langchain_community`).
+* Updated README with development setup, environment variables, and versioning strategy.
+* Confirmed environment stability with test queries.
+
+
