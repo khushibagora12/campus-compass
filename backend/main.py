@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks
+from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks, Response
 from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from fastapi.middleware.cors import CORSMiddleware
@@ -245,3 +245,14 @@ async def trigger_ingestion(background_tasks: BackgroundTasks, college_id: str =
 @app.get("/")
 def read_root():
     return {"message": "Campus Compass API is running."}
+
+# --- silence favicon 404s ---
+@app.get("/favicon.ico", include_in_schema=False)
+def no_favicon():
+    return Response(status_code=204)
+
+# --- local runner ---
+if __name__ == "__main__":
+    import os, uvicorn
+    port = int(os.getenv("PORT", 8000))
+    uvicorn.run("backend.main:app", host="0.0.0.0", port=port, reload=False)
