@@ -26,3 +26,6 @@ passlib[bcrypt]==1.7.4
 
 # Ingestion
 unstructured[all-docs]>=0.14.5
+
+# Hugging Face Spaces
+gradio==4.44.0
