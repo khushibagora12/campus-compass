@@ -1,20 +1,30 @@
 services:
   - type: web
     name: campus-compass-api
-    env: python
+    runtime: python
     plan: free
     region: oregon
-
+    rootDir: .
     buildCommand: |
       pip install --upgrade pip setuptools wheel
       pip install -r backend/requirements.txt -c constraints.txt
-
+      # Pre-warm HF cache during build (optional; comment out if builds get slow)
+      python - <<'PY'
+      from sentence_transformers import SentenceTransformer
+      SentenceTransformer("sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
+      PY
     startCommand: uvicorn backend.main:app --host 0.0.0.0 --port $PORT
-
     autoDeploy: true
-    healthCheckPath: /
-
+    healthCheckPath: /healthz
     envVars:
+      - key: PYTHON_VERSION
+        value: "3.12.10"
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: HF_HOME
+        value: /opt/render/.cache/huggingface
+
+      # Secrets: set values in Render dashboard
       - key: PINECONE_API_KEY
         sync: false
       - key: GOOGLE_API_KEY
@@ -27,11 +37,12 @@ services:
         sync: false
       - key: REDIS_URL
         sync: false
+      # Remove if not used:
       - key: REDIS_PASSWORD
         sync: false
+
+      # Safe defaults
       - key: PINECONE_INDEX_NAME
         value: campus-assistant
       - key: STORAGE_BUCKET_NAME
         value: college-documents
-      - key: PYTHON_VERSION
-        value: 3.12.10
