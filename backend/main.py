@@ -1,6 +1,7 @@
 import os
 import uuid
 import shutil
+import threading
 import time
 from dotenv import load_dotenv
 
@@ -10,16 +11,17 @@ from fastapi import FastAPI, Request, Form, File, UploadFile, BackgroundTasks
 from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Optional
 
+# LangChain / models (import modules only; we will instantiate lazily)
 from langchain_huggingface import HuggingFaceEmbeddings
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.prompts import PromptTemplate
 from langchain.schema.output_parser import StrOutputParser
 from langchain_community.chat_message_histories import RedisChatMessageHistory
-from langchain.schema.runnable import RunnableLambda
 from pinecone import Pinecone
 
+# Local modules
 from backend.supabase_client import supabase, supabase_admin
 from backend.auth_utils import verify_password
 from backend.ingest import process_documents_for_college
@@ -33,17 +35,23 @@ LLM_MODEL_NAME = "gemini-1.5-flash"
 REDIS_URL = os.getenv("REDIS_URL")
 STORAGE_BUCKET_NAME = os.getenv("STORAGE_BUCKET_NAME", "college-documents")
 
+# Optional: limit init time (seconds) so we don’t hang forever
+INIT_TIMEOUT_SECS = int(os.getenv("INIT_TIMEOUT_SECS", "180"))
+
 # --- APP SETUP ---
 app = FastAPI(title="Campus Compass API", version="5.0.0 Final")
 templates = Jinja2Templates(directory="backend/templates")
 
-# Globals filled during startup()
-pc = None
-index = None
-embeddings = None
-llm = None
-READY = False
-INIT_ERROR = None
+# --- SERVICE CONTAINERS (lazy init) ---
+_services = {
+    "pc": None,
+    "index": None,
+    "embeddings": None,
+    "llm": None,
+    "ready": False,
+    "error": None,
+    "started_at": time.time(),
+}
 
 # --- PROMPT SETUP ---
 prompt_template = """
@@ -69,62 +77,115 @@ class QueryRequest(BaseModel):
     query: str
     session_id: str = Field(default_factory=lambda: str(uuid.uuid4()))
 
-# --- STARTUP: defer heavy init so the port opens quickly ---
-@app.on_event("startup")
-def startup_init():
-    global pc, index, embeddings, llm, READY, INIT_ERROR
-    print("Initializing services (deferred)...", flush=True)
+
+def _init_services():
+    """Heavy initialization in a background thread so startup is instant."""
     try:
-        # Initialize clients
+        start_ts = time.time()
+        print("Initializing services (background)...")
+
+        # Pinecone
+        if not PINECONE_API_KEY:
+            raise RuntimeError("PINECONE_API_KEY not set")
         pc = Pinecone(api_key=PINECONE_API_KEY)
         index = pc.Index(PINECONE_INDEX_NAME)
 
-        # HuggingFaceEmbeddings will download model on first use if missing
+        # Embeddings (CPU)
         embeddings = HuggingFaceEmbeddings(
-            model_name=EMBEDDING_MODEL_NAME,
-            model_kwargs={'device': 'cpu'}
+            model_name=EMBEDDING_MODEL_NAME, model_kwargs={'device': 'cpu'}
         )
 
-        # Google LLM client
+        # LLM
+        if not GOOGLE_API_KEY:
+            raise RuntimeError("GOOGLE_API_KEY not set")
         llm = ChatGoogleGenerativeAI(model=LLM_MODEL_NAME, temperature=0.3)
 
-        READY = True
-        print("Services initialized.", flush=True)
+        _services.update({
+            "pc": pc,
+            "index": index,
+            "embeddings": embeddings,
+            "llm": llm,
+            "ready": True,
+            "error": None,
+        })
+        print(f"Services ready in {time.time() - start_ts:.1f}s.")
     except Exception as e:
-        INIT_ERROR = str(e)
-        READY = False
-        # Do not crash the process—allow health endpoint to report the issue
-        print(f"Startup init failed: {INIT_ERROR}", flush=True)
+        _services["error"] = str(e)
+        _services["ready"] = False
+        print(f"[FATAL] Service init failed: {e}")
 
-# --- HEALTH/READINESS ---
+
+@app.on_event("startup")
+def _kickoff_background_init():
+    """
+    Do NOT block startup. Kick heavy init in a background thread so Uvicorn can bind the port
+    and Render can detect the service immediately.
+    """
+    print("Starting API (instant). Kicking off background initialization...")
+    t = threading.Thread(target=_init_services, daemon=True)
+    t.start()
+
+
+# --- HEALTH CHECK / ROOT ---
 @app.get("/healthz")
-def health():
-    if INIT_ERROR:
-        return JSONResponse({"ok": False, "error": INIT_ERROR}, status_code=500)
-    return {"ok": READY}
+def healthz():
+    status = "ready" if _services["ready"] else ("error" if _services["error"] else "starting")
+    return JSONResponse({
+        "status": status,
+        "uptime_seconds": int(time.time() - _services["started_at"]),
+        "error": _services["error"],
+    })
+
+
+@app.get("/")
+def read_root():
+    return {"message": "Campus Compass API is running."}
+
 
 # --- STUDENT API ENDPOINT ---
 @app.post("/api/ask", response_model=dict)
 async def ask_question(request: QueryRequest):
-    if not READY:
-        msg = "Warming up the AI engine (downloading models). Please retry in ~30–60 seconds."
-        if INIT_ERROR:
-            msg = f"Service init error: {INIT_ERROR}"
-        return {"answer": msg, "session_id": request.session_id, "fallback": True}
+    print(f"Session '{request.session_id}' | Query for '{request.college_id}': {request.query}")
 
-    print(f"Session '{request.session_id}' | Query for '{request.college_id}': {request.query}", flush=True)
+    # If services failed or are still starting, respond fast (no 500 loops)
+    if _services["error"]:
+        return {
+            "error": "Service failed to initialize.",
+            "details": _services["error"],
+        }
+    if not _services["ready"]:
+        # Optional: allow waiting a short grace period before giving up
+        waited = 0
+        while waited < min(8, INIT_TIMEOUT_SECS) and not _services["ready"] and not _services["error"]:
+            time.sleep(0.5)
+            waited += 0.5
+        if not _services["ready"]:
+            return {
+                "answer": "Booting up models… please retry in a few seconds.",
+                "session_id": request.session_id,
+                "fallback": True,
+            }
 
     try:
         memory = RedisChatMessageHistory(session_id=request.session_id, url=REDIS_URL)
 
-        query_vector = embeddings.embed_query(request.query)
-        query_results = index.query(
+        query_vector = _services["embeddings"].embed_query(request.query)
+        query_results = _services["index"].query(
             namespace=request.college_id, vector=query_vector, top_k=3, include_metadata=True
         )
-        context = "\n\n".join([match.metadata.get('text', '') for match in query_results.matches if match.metadata])
+        # careful: handle empty matches
+        matches = getattr(query_results, "matches", []) or []
+        context_chunks = []
+        for m in matches:
+            md = getattr(m, "metadata", {}) or {}
+            txt = md.get("text") or md.get("chunk") or ""
+            if txt:
+                context_chunks.append(txt)
+        context = "\n\n".join(context_chunks)
 
-        rag_chain = prompt | llm | StrOutputParser()
+        rag_chain = prompt | _services["llm"] | StrOutputParser()
         chat_history_messages = memory.messages
+
         answer = rag_chain.invoke({
             "context": context,
             "question": request.query,
@@ -141,14 +202,16 @@ async def ask_question(request: QueryRequest):
             return {"answer": answer, "session_id": request.session_id, "fallback": False}
 
     except Exception as e:
-        print(f"An error occurred in /api/ask: {e}", flush=True)
+        print(f"An error occurred in /api/ask: {e}")
         return {"error": "Failed to generate an answer.", "details": str(e)}
 
-# --- ADMIN DASHBOARD (unchanged) ---
+
+# --- ADMIN DASHBOARD ENDPOINTS (unchanged except imports now safe) ---
 @app.get("/admin", response_class=HTMLResponse)
-async def get_admin_login(request: Request, error: str = None):
+async def get_admin_login(request: Request, error: Optional[str] = None):
     error_message = "Invalid username or password." if error else None
     return templates.TemplateResponse("login.html", {"request": request, "error_message": error_message})
+
 
 @app.post("/admin/login", response_class=HTMLResponse)
 async def post_admin_login(request: Request, username: str = Form(...), password: str = Form(...)):
@@ -165,7 +228,9 @@ async def post_admin_login(request: Request, username: str = Form(...), password
                 "college_id": user['college_id'],
                 "files": file_list
             })
+
     return RedirectResponse(url="/admin?error=true", status_code=303)
+
 
 @app.post("/admin/upload")
 async def upload_documents(college_id: str = Form(...), files: List[UploadFile] = File(...)):
@@ -183,6 +248,7 @@ async def upload_documents(college_id: str = Form(...), files: List[UploadFile] 
 
     return {"message": f"{len(files)} files uploaded successfully to '{college_id}'."}
 
+
 @app.post("/admin/ingest")
 async def trigger_ingestion(background_tasks: BackgroundTasks, college_id: str = Form(...)):
     temp_dir = f"temp_{college_id}_{uuid.uuid4()}"
@@ -199,9 +265,17 @@ async def trigger_ingestion(background_tasks: BackgroundTasks, college_id: str =
                 res = supabase_admin.storage.from_(STORAGE_BUCKET_NAME).download(file_path_in_bucket)
                 f.write(res)
 
-        print(f"Adding ingestion for college '{college_id}' to background tasks...", flush=True)
-        background_tasks.add_task(process_documents_for_college, college_id, temp_dir, embeddings)
-        background_tasks.add_task(time.sleep, 300)
+        print(f"Adding ingestion for college '{college_id}' to background tasks...")
+        # Ensure core services are ready before ingestion uses embeddings/vector store
+        def _run_ingest():
+            waited = 0
+            while not _services["ready"] and not _services["error"] and waited < INIT_TIMEOUT_SECS:
+                time.sleep(0.5)
+                waited += 0.5
+            process_documents_for_college(college_id, temp_dir, _services["embeddings"])
+
+        background_tasks.add_task(_run_ingest)
+        background_tasks.add_task(time.sleep, 300)  # Wait 5 minutes
         background_tasks.add_task(shutil.rmtree, temp_dir)
 
     except Exception as e:
@@ -209,8 +283,3 @@ async def trigger_ingestion(background_tasks: BackgroundTasks, college_id: str =
         return {"error": f"Failed to prepare files for ingestion: {str(e)}"}
 
     return {"message": f"Ingestion process for '{college_id}' has been started."}
-
-# --- ROOT ENDPOINT ---
-@app.get("/")
-def read_root():
-    return {"message": "Campus Compass API is running."}
