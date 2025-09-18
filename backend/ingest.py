@@ -50,25 +50,25 @@ def chunk_documents(documents: list):
 # --- MAIN INGESTION FUNCTION (YOUR STRUCTURE + TANAY'S LOGIC) ---
 
 def process_documents_for_college(college_id: str, temp_dir: str, embeddings: HuggingFaceEmbeddings):
-    """
-    Processes all documents from a temporary directory for a single college,
-    using the enhanced loading, chunking, and metadata logic.
-    """
     print(f"\n--- Processing data for college: {college_id} from path {temp_dir} ---")
     files_to_process = [f for f in os.listdir(temp_dir) if f.endswith(('.pdf', '.docx', '.csv', '.xlsx','.txt'))]
-    
+
+    processed = 0
+    skipped = 0
+
     for filename in tqdm(files_to_process, desc=f"Ingesting for {college_id}"):
         file_path = os.path.join(temp_dir, filename)
         documents = load_single_document(file_path)
         if not documents:
+            skipped += 1
             continue
-            
+
         chunked_documents = chunk_documents(documents)
         if not chunked_documents:
             print(f"Warning: Could not create any text chunks from {filename}. Skipping.")
+            skipped += 1
             continue
-        
-        # MERGED: Tanay's robust metadata cleaning to prevent errors
+
         for chunk in chunked_documents:
             clean_metadata = {
                 "source": str(chunk.metadata.get("source", "unknown")).split('/')[-1],
@@ -85,5 +85,9 @@ def process_documents_for_college(college_id: str, temp_dir: str, embeddings: Hu
                 namespace=college_id
             )
             print(f"Successfully processed {filename}.")
+            processed += 1
         except Exception as e:
             print(f"An error occurred during upload for {filename}: {e}")
+            skipped += 1
+
+    print(f"✅ Ingestion complete for '{college_id}'. Files processed: {processed}, skipped: {skipped}.")
