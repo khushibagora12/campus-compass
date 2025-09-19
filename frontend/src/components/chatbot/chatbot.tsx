@@ -3,6 +3,7 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import { UserRoundSearch } from 'lucide-react';
 
 type Message = {
     id: number
@@ -24,13 +25,22 @@ export default function Chatbot() {
         setInput("")
         setLoading(true)
 
+        const user = {
+            college_id : "iips",
+            query : userMsg.text,
+            session_id : crypto.randomUUID()
+        }
         try {
-            const res = await fetch("/", {
+            // const url = import.meta.env.VITE_BACKEND_URL;
+            // console.log("url: ", url)
+
+            const res = await fetch(import.meta.env.VITE_BACKEND_URL, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ message: userMsg.text }),
+                body: JSON.stringify(user),
             })
             const data = await res.json()
+            console.log("data: ", data)
             const botMsg: Message = {
                 id: Date.now(),
                 role: "bot",
@@ -55,7 +65,7 @@ export default function Chatbot() {
                             {messages.map(msg => (
                                 <div
                                     key={msg.id}
-                                    className={`p-3 rounded-xl max-w-[80%] ${msg.role === "user"
+                                    className={`p-3 rounded-xl max-w-[80%] my-1 ${msg.role === "user"
                                             ? "bg-[#4e1eeb] text-white ml-auto"
                                             : "bg-gray-200 text-black mr-auto"
                                         }`}
