@@ -14,7 +14,10 @@ export default {
         fascinate: ['Fascinate', 'sans-serif'],
         frederica: ['Fredericka the Great', 'sans-serif'],
         rye: ['Rye', 'sans-serif'],
-        bungee: ['Bungee Shade', 'sans-serif']
+        bungee: ['Bungee Shade', 'sans-serif'],
+        VT323: ['VT323', 'sans-serif'],
+        cinzel: ['Cinzel', 'sans-serif'],
+
       },
       animation: {
         'star-movement-bottom': 'star-movement-bottom linear infinite alternate',

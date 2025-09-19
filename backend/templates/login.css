@@ -1,0 +1,200 @@
+/* ----- Base + Theme ----- */
+@import url("https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap");
+
+:root{
+  --bg-1: #0f1020;
+  --bg-2: #12132b;
+  --txt: #e8eaf1;
+  --muted: #b8bfd6;
+  --primary: #7c5cff;
+  --primary-2: #00e0c7;
+  --danger: #ff5c7a;
+  --success: #31d0aa;
+  --glass: rgba(255,255,255,0.06);
+  --glass-strong: rgba(255,255,255,0.12);
+  --radius: 16px;
+  --shadow: 0 10px 30px rgba(0,0,0,.35);
+  --blur: blur(16px);
+}
+
+@media (prefers-color-scheme: light){
+  :root{
+    --bg-1: #f2f5ff;
+    --bg-2: #eef2ff;
+    --txt: #1f2330;
+    --muted: #5a6075;
+    --glass: rgba(255,255,255,0.7);
+    --glass-strong: rgba(255,255,255,0.9);
+    --shadow: 0 20px 40px rgba(30,38,86,.15);
+  }
+}
+
+/* ----- Layout ----- */
+* { box-sizing: border-box; }
+html, body {
+  height: 100%;
+}
+body{
+  margin: 0;
+  font-family: "Poppins", system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+  color: var(--txt);
+  background: radial-gradient(1200px 800px at 10% 10%, #1e1f3b, transparent 60%),
+              radial-gradient(1000px 700px at 90% 20%, #112f3a, transparent 60%),
+              linear-gradient(120deg, var(--bg-1), var(--bg-2));
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+}
+
+/* Animated blobs (pure CSS) */
+body::before,
+body::after{
+  content:"";
+  position: fixed;
+  width: 50vmax;
+  height: 50vmax;
+  filter: blur(60px);
+  opacity: .35;
+  z-index: -2;
+  animation: float 18s linear infinite;
+}
+body::before{
+  background: radial-gradient(circle at 30% 30%, var(--primary), transparent 60%);
+  top: -15vmax; left: -12vmax;
+}
+body::after{
+  background: radial-gradient(circle at 70% 70%, var(--primary-2), transparent 60%);
+  bottom: -18vmax; right: -15vmax;
+  animation-direction: reverse;
+}
+
+@keyframes float{
+  0% { transform: translateY(0) rotate(0); }
+  50% { transform: translateY(-20px) rotate(10deg); }
+  100% { transform: translateY(0) rotate(0); }
+}
+
+/* ----- Card ----- */
+.login-container{
+  width: min(92vw, 420px);
+  background: linear-gradient(180deg, var(--glass-strong), var(--glass));
+  backdrop-filter: saturate(140%) blur(10px);
+  border: 1px solid rgba(255,255,255,.12);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+}
+
+.login-container::after{
+  /* subtle highlight */
+  content:"";
+  position:absolute; inset: 0;
+  background: radial-gradient(800px 200px at -10% -20%, rgba(255,255,255,.25), transparent 45%);
+  pointer-events: none;
+}
+
+h1{
+  margin: 0 0 18px;
+  font-size: 1.6rem;
+  text-align: center;
+  letter-spacing: .4px;
+  font-weight: 600;
+}
+
+.error-message{
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: rgba(255, 92, 122, .15);
+  color: #ffd8df;
+  border: 1px solid rgba(255, 92, 122, .35);
+  display: none; /* Toastify will handle display; keep as fallback */
+}
+
+/* ----- Form ----- */
+#form-div{ margin-top: 6px; }
+
+form{
+  display: grid;
+  gap: 14px;
+}
+
+input{
+  width: 100%;
+  padding: 14px 44px 14px 14px; /* space for toggle on password */
+  border-radius: 12px;
+  border: 1px solid rgba(255,255,255,.16);
+  background: rgba(255,255,255,.06);
+  color: var(--txt);
+  outline: none;
+  transition: border .2s ease, background .2s ease, transform .05s ease;
+}
+
+input::placeholder{
+  color: var(--muted);
+}
+
+input:focus{
+  border-color: var(--primary);
+  background: rgba(255,255,255,.12);
+  box-shadow: 0 0 0 4px rgba(124,92,255,.18);
+}
+
+/* Password wrapper with toggle */
+.input-wrap{
+  position: relative;
+}
+.toggle-pass{
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  border: 0;
+  background: transparent;
+  padding: 8px 10px;
+  border-radius: 10px;
+  cursor: pointer;
+  color: var(--muted);
+  transition: background .2s ease, color .2s ease;
+}
+.toggle-pass:hover,
+.toggle-pass:focus{
+  background: rgba(255,255,255,.1);
+  color: var(--txt);
+  outline: none;
+}
+
+button[type="submit"]{
+  margin-top: 6px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 0;
+  background: linear-gradient(90deg, var(--primary), var(--primary-2));
+  color: white;
+  font-weight: 600;
+  letter-spacing: .2px;
+  cursor: pointer;
+  transition: transform .06s ease, filter .2s ease, box-shadow .2s ease;
+  box-shadow: 0 10px 20px rgba(124,92,255,.25);
+}
+
+button[type="submit"]:hover{ filter: brightness(1.05); }
+button[type="submit"]:active{ transform: translateY(1px) scale(0.99); }
+
+/* Small helper row (forgot/remember) – optional if you add later */
+.helper-row{
+  display: flex; justify-content: space-between; align-items: center;
+  gap: 8px; margin-top: 6px;
+  color: var(--muted); font-size: .92rem;
+}
+.helper-row a{ color: var(--primary-2); text-decoration: none; }
+.helper-row a:hover{ text-decoration: underline; }
+
+/* Reduce motion */
+@media (prefers-reduced-motion: reduce){
+  body::before, body::after{ animation: none; }
+  button[type="submit"]{ transition: none; }
+  input, .toggle-pass{ transition: none; }
+}
