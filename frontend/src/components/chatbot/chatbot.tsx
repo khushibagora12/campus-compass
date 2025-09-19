@@ -3,18 +3,21 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
-import { UserRoundSearch } from 'lucide-react';
+// import { UserRoundSearch } from 'lucide-react';
 
 type Message = {
     id: number
     role: "user" | "bot"
     text: string
 }
-
+interface BotData{
+    answer: string
+}
 export default function Chatbot() {
     const [messages, setMessages] = useState<Message[]>([])
     const [input, setInput] = useState("")
     const [loading, setLoading] = useState(false)
+    // const [data, setData] = useState<BotData>();
 
     async function handleSend() {
         if (!input.trim()) {
@@ -26,7 +29,7 @@ export default function Chatbot() {
         setLoading(true)
 
         const user = {
-            college_id : "iips",
+            college_id : "iit_indore",
             query : userMsg.text,
             session_id : crypto.randomUUID()
         }
@@ -44,7 +47,7 @@ export default function Chatbot() {
             const botMsg: Message = {
                 id: Date.now(),
                 role: "bot",
-                text: data.reply,
+                text: data.answer,
             }
             setMessages(prev => [...prev, botMsg])
         }
