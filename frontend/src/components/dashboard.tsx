@@ -39,14 +39,14 @@ export default function Dashboard() {
                         </div>
                     </div>
                 </div>
-                <div className="">
+                <div className="absolute -bottom-7 xl:-bottom-12 left-[50%] -translate-x-[50%]">
                     <img
                         src="/robot.gif"
                         alt="Robot animation"
-                        className=" max-w-[250px] sm:max-w-[300px] mx-auto"
+                        className="w-[250px] mx-auto"
                     />
                 </div>
             </div>
         </>
     )
-}
+}   
