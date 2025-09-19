@@ -3,15 +3,13 @@ import { Card, CardContent } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
+import axios from "axios"
 // import { UserRoundSearch } from 'lucide-react';
 
 type Message = {
     id: number
     role: "user" | "bot"
     text: string
-}
-interface BotData{
-    answer: string
 }
 export default function Chatbot() {
     const [messages, setMessages] = useState<Message[]>([])
@@ -34,20 +32,14 @@ export default function Chatbot() {
             session_id : crypto.randomUUID()
         }
         try {
-            // const url = import.meta.env.VITE_BACKEND_URL;
-            // console.log("url: ", url)
-
-            const res = await fetch(import.meta.env.VITE_BACKEND_URL, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(user),
-            })
-            const data = await res.json()
-            console.log("data: ", data)
+            const res = await axios.post(import.meta.env.VITE_BACKEND_URL+"api/ask", user, {
+                headers: {
+                    'Content-Type': 'application/json'
+        }})
             const botMsg: Message = {
                 id: Date.now(),
                 role: "bot",
-                text: data.answer,
+                text: res.data.answer,
             }
             setMessages(prev => [...prev, botMsg])
         }

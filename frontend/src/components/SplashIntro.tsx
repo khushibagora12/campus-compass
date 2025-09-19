@@ -22,7 +22,7 @@ export default function SplashIntro({ onDone, duration = 1200, perWord = 350 }: 
   useEffect(() => {
     const t = window.setTimeout(() => {
       setSlideUp(true);
-      window.setTimeout(onDone, 600); // wait for slide animation
+      window.setTimeout(onDone, 600);
     }, duration);
     return () => clearTimeout(t);
   }, [duration, onDone]);
@@ -37,7 +37,7 @@ export default function SplashIntro({ onDone, duration = 1200, perWord = 350 }: 
         slideUp ? "-translate-y-full" : "translate-y-0"
       ].join(" ")}
     >
-      <div className="text-white text-4xl md:text-5xl font-semibold tracking-wide">
+      <div className="text-white text-5xl md:text-7xl font-semibold tracking-wide">
         <WordSwitcher words={greetings} index={index} />
       </div>
     </div>
