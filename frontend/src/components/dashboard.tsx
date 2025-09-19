@@ -1,6 +1,6 @@
 import ChatInterface from "./chatbot/interface";
-import ShinyText from "./ShinyText"
-import StarBorder from './StarBorder'
+import ShinyText from "./ShinyText";
+import StarBorder from "./StarBorder";
 import { useState } from "react";
 
 export default function Dashboard() {
